@@ -1,0 +1,37 @@
+---
+title: "Untitled"
+author: "Uday Gadge"
+date: "2022-12-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+fossil_fuel <- read_csv("C:/Users/gadge/Stats/Project/fossil-fuel-primary-energy.csv")
+
+colnames(fossil_fuel) <- c('ID','Country','Code','Year','Amount_in_TWh')
+
+fossil_fuel_1965 <- fossil_fuel %>% filter(Year == 1965)
+fossil_fuel_2021 <- fossil_fuel %>% filter(Year == 2021)
+
+arrange(fossil_fuel_2021,desc(Amount_in_TWh))
+```
+```{r}
+fossil_fuel %>% filter(Country %in% c("Asia","Europe","Africa","North America","South America","Australia")) %>% ggplot(aes(Country, Amount_in_TWh)) + 
+  geom_boxplot(fill = "lightblue") + xlab("Continent") + ylab("Fossil Fuel Consumption") 
+
+  
+```
+```{r}
+arrange(fossil_fuel_2021 %>% filter(!is.na(Code) & Country != 'World'),desc(Amount_in_TWh))
+
+```
+```{r}
+fossil_fuel %>% filter(Country %in% c("China","United States","India","Japan","Iran")) %>% ggplot(aes(Country, Year)) + 
+  geom_point(aes(size = Amount_in_TWh), color = "light blue") + xlab("Country") + ylab("Year") 
+
+```
+

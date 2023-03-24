@@ -1,0 +1,104 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+#Ignore This code part
+```{r}
+library(readr)
+library(tidyverse)
+
+#import data
+# data2 <- read_csv("climate_change_download_0.csv")
+data2 <- readxl::read_xls("climate_change_download_0.xls")
+str(data2)
+
+head(data2)
+str(head(data2))
+
+data1<-na.omit(data2)
+str(data1)
+
+
+```
+
+
+
+
+
+
+#Cleaning part of climate_change_download_0.csv
+```{r}
+library(tidyverse)
+
+# str(climate_change_download_0)
+df <- data2 %>%
+  pivot_longer(`1990`: `2011`, names_to = "year", values_to = "value") %>%
+  select(-`Series code`) %>%
+  pivot_wider(id_cols = c(`Country name`, year), names_from = `Series name`, values_from = value)
+df
+data1<-df[,colSums(is.na(df))<nrow(df)]
+str(data1)
+
+str(data1)
+write.csv(data1,"Stats VVS Climate.csv", row.names = FALSE)
+```
+
+
+#Merging part
+```{r}
+library(tidyverse)
+data3 <- read.csv("C:/Users/Vilas/Downloads/temp_country_2013.csv")
+data2 <- read.csv("C:/Users/Vilas/Downloads/Final_Dataset.csv")
+data1 <- read.csv("C:/Users/Vilas/Downloads/Stats VVS Climate.csv")
+
+
+merged_data <- inner_join(data1, data2, by = c("Country.name" = "Country", "year" = "Year"))
+merged_data
+
+
+
+```
+
+
+
+#Visualization Part of temp_country_2013.csv
+```{r}
+library(tidyverse)
+
+library(ggplot2)
+data3 %>% filter(Country %in% c("India", "Afghanistan", "United States","Italy","Mali")) %>% 
+  group_by(Country, Year) %>% summarise(Temp = mean(Temp))%>% 
+
+ggplot() + 
+  geom_point(mapping = aes(x = Year, y = Temp, color=Country))
+
+
+```
+
+```{r}
+library(tidyverse)
+
+library(ggplot2)
+data3 %>% filter(Country %in% c("India", "Afghanistan", "United States","Italy","Mali")) %>% 
+  group_by(Country, Month) %>% summarise(Temp = mean(Temp))%>% 
+
+ggplot() + 
+  geom_smooth(mapping = aes(x = Month, y = Temp, color=Country))+
+  scale_x_continuous(breaks = seq(1, 12, by = 2))
+
+```

@@ -1,0 +1,213 @@
+---
+title: "Global_temperatures"
+author: "Uday Gadge"
+date: "2022-09-03"
+output: html_document
+---
+
+Loading the data for global temperatures
+
+```{r, warning = FALSE}
+temp_data <- read.csv(file = 'GlobalTemperatures.csv')
+head(temp_data)
+
+```
+
+Getting just years after 1900
+
+```{r}
+str(temp_data)
+
+```
+
+
+```{r}
+temp_data$dt = as.Date(temp_data$dt, format = "%d-%m-%Y")
+str(temp_data)
+```
+```{r}
+head(temp_data)
+```
+```{r}
+max(temp_data$dt)
+min(temp_data$dt)
+```
+```{r}
+sapply(temp_data, function(x) sum(is.na(x)))
+```
+```{r}
+mean(temp_data$LandAverageTemperature)
+median(temp_data$LandAverageTemperature)
+```
+```{r}
+mean(temp_data$LandAndOceanAverageTemperature)
+median(temp_data$LandAndOceanAverageTemperature)
+```
+
+```{r}
+temp_data$year = format(temp_data$dt, "%Y")
+temp_data$month = format(temp_data$dt, "%m")
+head(temp_data)
+```
+```{r}
+library(dplyr)
+annual_temp <- temp_data %>% group_by(year) %>% summarize(LandAverageTemperature = mean(LandAverageTemperature), LandAndOceanAverageTemperature = mean(LandAndOceanAverageTemperature))
+head(annual_temp)
+```
+```{r}
+library(tidyverse)
+annual_temp$year = as.Date(annual_temp$year, format = "%Y")
+ggplot(data = annual_temp) + geom_point(mapping = aes(x = year, y = LandAverageTemperature, color = LandAverageTemperature))+
+  scale_colour_gradient(low='yellow', high='#de2d26') +
+  theme(legend.title = element_blank()) +  geom_smooth(mapping = aes(x = year, y = LandAverageTemperature), ,color="#56B4E9") + ggtitle("Annual Land Temperatures") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+ggplot(data = annual_temp) + geom_point(mapping = aes(x = year, y = LandAndOceanAverageTemperature, color = LandAndOceanAverageTemperature))+
+  scale_colour_gradient(low='yellow', high='#de2d26') +
+  theme(legend.title = element_blank())  + geom_smooth(mapping = aes(x = year, y = LandAndOceanAverageTemperature), ,color="#56B4E9")+ ggtitle("Annual Land and Ocean Temperatures") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+```{r}
+library(data.table)
+annual_temp = annual_temp %>% mutate(differenceLandAverageTemperature = annual_temp$LandAverageTemperature - shift(LandAverageTemperature), differenceLandOceanAverageTemperature = annual_temp$LandAndOceanAverageTemperature - shift(LandAndOceanAverageTemperature))  
+
+head(annual_temp)
+```
+```{r}
+ggplot(data = annual_temp) + geom_path(mapping = aes(x = year, y = differenceLandAverageTemperature), color = "#999999") + geom_smooth(mapping = aes(x = year, y = differenceLandAverageTemperature*2), color = "#56B4E9") +scale_y_continuous(
+    "differenceLandAverageTemperature", 
+    sec.axis = sec_axis(~ . * 0.5, name = "Trend")
+  ) + geom_hline(yintercept=0)+ggtitle("Trend in Land temperature changes") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+ggplot(data = annual_temp) + geom_path(mapping = aes(x = year, y = differenceLandOceanAverageTemperature), color = "#999999") + geom_smooth(mapping = aes(x = year, y = differenceLandOceanAverageTemperature*2), color = "#56B4E9") +scale_y_continuous(
+    "differenceLandOceanAverageTemperature", 
+    sec.axis = sec_axis(~ . * 0.5, name = "Trend")
+  ) + geom_hline(yintercept=0)+ggtitle("Trend in Land and Ocean temperature changes") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+```{r}
+temp_data %>% group_by(month) %>% summarise(LandAverageTemperature = mean(LandAverageTemperature), LandAndOceanAverageTemperature = mean(LandAndOceanAverageTemperature))
+```
+```{r}
+annual_temp_land = temp_data %>% group_by(year) %>% summarize(Jan = first(na.omit(LandAverageTemperature)), Dec = last(na.omit(LandAverageTemperature)), max_temp = max(LandAverageTemperature), min_temp = min(LandAverageTemperature))
+
+head(annual_temp_land)
+```
+```{r}
+annual_temp_land$year = as.Date(annual_temp_land$year, format = "%Y")
+ggplot(data = annual_temp_land)+geom_segment(aes(
+  x = year,
+  xend = year,
+  y = max_temp,
+  yend = min_temp,
+), size = 0.5)+ geom_smooth(aes(x = year, y = max_temp), color = '#de2d26')+ geom_smooth(aes(x = year, y = min_temp), color = "#56B4E9") + labs(y = 'Temperature', x = 'Year')+ggtitle("Max and Min Land Temperature of the year") +
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+
+```{r}
+annual_temp_land_ocean = temp_data %>% group_by(year) %>% summarize(Jan = first(na.omit(LandAndOceanAverageTemperature)), Dec = last(na.omit(LandAndOceanAverageTemperature)), max_temp = max(LandAndOceanAverageTemperature), min_temp = min(LandAndOceanAverageTemperature))
+
+head(annual_temp_land_ocean)
+```
+
+```{r}
+annual_temp_land_ocean$year = as.Date(annual_temp_land_ocean$year, format = "%Y")
+ggplot(data = annual_temp_land_ocean)+geom_segment(aes(
+  x = year,
+  xend = year,
+  y = max_temp,
+  yend = min_temp,
+), size = 0.5)+ geom_smooth(aes(x = year, y = max_temp), color = '#de2d26')+ geom_smooth(aes(x = year, y = min_temp), color = "#56B4E9") + labs(y = 'Temperature', x = 'Year')+ggtitle("Max and Min Land and Ocean Temperature  of the year") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+```{r}
+ggplot(data = annual_temp_land) + geom_point(mapping = aes(x = year, y = max_temp, color = max_temp))+
+  scale_colour_gradient(low='yellow', high='#de2d26') +
+  theme(legend.title = element_blank()) +  geom_smooth(mapping = aes(x = year, y = max_temp), ,color="#56B4E9") + ggtitle("Annual max Land Temperatures") +
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+```{r}
+ggplot(data = annual_temp_land) + geom_point(mapping = aes(x = year, y = min_temp, color = min_temp))+
+  scale_colour_gradient(low='yellow', high='#de2d26') +
+  theme(legend.title = element_blank()) +  geom_smooth(mapping = aes(x = year, y = min_temp), ,color="#56B4E9") + ggtitle("Annual min Land Temperatures") +
+  theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+```{r}
+adj_year_temp <- copy(temp_data)
+head(adj_year_temp)
+```
+```{r}
+adj_year_temp$year = as.integer(adj_year_temp$year)
+adj_year_temp$month = as.integer(adj_year_temp$month)
+adj_year_temp$adjusted_year = ifelse(adj_year_temp$month == 12,1,0)
+adj_year_temp$adjusted_year = adj_year_temp$year+adj_year_temp$adjusted_year
+head(adj_year_temp,20)
+```
+
+```{r}
+months <- c(1,2,3,4,5,6,7,8,9,10,11,12)
+names(months) <- c("Winter","Winter","Spring","Spring","Spring","Summer","Summer","Summer", "Autumn", "Autumn", "Autumn","Winter")
+```
+```{r}
+adj_year_temp$season = sapply(adj_year_temp$month, function(x) names(months)[x])
+head(adj_year_temp)
+```
+
+```{r}
+adj_year_temp = adj_year_temp %>% group_by(adjusted_year, season) %>% summarise(LandAverageTemperature = mean(LandAverageTemperature),LandAndOceanAverageTemperature = mean(LandAndOceanAverageTemperature))
+
+head(adj_year_temp)
+```
+```{r}
+adj_year_temp$year = as.Date(as.character(adj_year_temp$adjusted_year), format = "%Y")
+ggplot(data = adj_year_temp) + geom_point(mapping = aes(x = year, y = LandAverageTemperature, color = LandAverageTemperature))+
+  scale_colour_gradient(low='yellow', high='#de2d26') +
+  theme(legend.title = element_blank()) +  geom_smooth(mapping = aes(x = year, y = LandAverageTemperature), ,color="#56B4E9") + ggtitle("Annual Land Temperatures per season") +
+  theme(plot.title = element_text(hjust = 0.5)) + facet_wrap(~ season, nrow = 2, scales = "fixed")
+```
+```{r}
+ggplot(data = adj_year_temp) + geom_point(mapping = aes(x = year, y = LandAndOceanAverageTemperature, color = LandAndOceanAverageTemperature))+
+  scale_colour_gradient(low='yellow', high='#de2d26') +
+  theme(legend.title = element_blank()) +  geom_smooth(mapping = aes(x = year, y =  LandAndOceanAverageTemperature), ,color="#56B4E9") + ggtitle("Annual Land and Ocean Temperatures per season") +
+  theme(plot.title = element_text(hjust = 0.5)) + facet_wrap(~ season, nrow = 2, scales = "fixed")
+
+```
+
+```{r}
+library(dplyr)
+adj_year_temp <- adj_year_temp %>%
+    group_by(season) %>%
+    arrange(year) %>%
+    mutate(differenceLandAverageTemperature = LandAverageTemperature - lag(LandAverageTemperature, default = first(LandAverageTemperature)), differenceLandOceanAverageTemperature = LandAndOceanAverageTemperature - lag(LandAndOceanAverageTemperature, default = first(LandAndOceanAverageTemperature)))
+
+head(adj_year_temp)
+```
+```{r}
+ggplot(data = adj_year_temp) + geom_path(mapping = aes(x = year, y = differenceLandAverageTemperature), color = "#999999") + geom_smooth(mapping = aes(x = year, y = differenceLandAverageTemperature*2), color = "#56B4E9") +scale_y_continuous(
+    "differenceLandAverageTemperature", 
+    sec.axis = sec_axis(~ . * 0.5, name = "Trend")
+  ) + geom_hline(yintercept=0)+ggtitle("Trend in Land temperature changes per season") +
+  theme(plot.title = element_text(hjust = 0.5)) + facet_wrap(~ season, nrow = 2, scales = "fixed")
+```
+```{r}
+ggplot(data = adj_year_temp) + geom_path(mapping = aes(x = year, y = differenceLandOceanAverageTemperature), color = "#999999") + geom_smooth(mapping = aes(x = year, y = differenceLandOceanAverageTemperature*2), color = "#56B4E9") +scale_y_continuous(
+    "differenceLandOceanAverageTemperature", 
+    sec.axis = sec_axis(~ . * 0.5, name = "Trend")
+  ) + geom_hline(yintercept=0)+ggtitle("Trend in Land and Ocean temperature changes") +
+  theme(plot.title = element_text(hjust = 0.5))+ facet_wrap(~ season, nrow = 2, scales = "fixed")
+```
+
